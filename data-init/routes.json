@@ -62,7 +62,8 @@
 		"Code": "LAD|712988",
 		"Name": "А13 Суботівська - Червоної Калини",
 		"Id": 712988,
-		"ComplexEditor": null
+		"ComplexEditor": null,
+		"TurnStopId": 36301
 	}, {
 		"Code": "LAD|712989",
 		"Name": "А14 Червоної Калини - ТЦ \"Метро\"",
@@ -77,7 +78,8 @@
 		"Code": "LAD|712991",
 		"Name": "А16 Сихівська - Залізничний вокзал",
 		"Id": 712991,
-		"ComplexEditor": null
+		"ComplexEditor": null,
+		"TurnStopId": 36649
 	}, {
 		"Code": "LAD|1129393",
 		"Name": "А17 Миколайчука - Протезний завод",
@@ -132,7 +134,8 @@
 		"Code": "LAD|713002",
 		"Name": "А27 Скнилів - Личаківська (АС-6)",
 		"Id": 713002,
-		"ComplexEditor": null
+		"ComplexEditor": null, 
+		"TurnStopId": 36618
 	}, {
 		"Code": "LAD|713003",
 		"Name": "А28 Рудно - Варшавська",
@@ -147,7 +150,8 @@
 		"Code": "LAD|949921",
 		"Name": "А30 Величковського - Новий Львів",
 		"Id": 949921,
-		"ComplexEditor": null
+		"ComplexEditor": null,
+		"TurnStopId": 36424
 	}, {
 		"Code": "LAD|713006",
 		"Name": "А31 Залізничний вокзал - Хмельницького",
@@ -172,7 +176,8 @@
 		"Code": "LAD|713010",
 		"Name": "А35 Трильовського - Польова",
 		"Id": 713010,
-		"ComplexEditor": null
+		"ComplexEditor": null,
+		"TurnStopId": 36782
 	}, {
 		"Code": "LAD|2136051",
 		"Name": "А36-рем Кропивницького -  Винники",
@@ -257,12 +262,14 @@
 		"Code": "LAD|1723724",
 		"Name": "А53 Червоної Калини - Хмельницького",
 		"Id": 1723724,
-		"ComplexEditor": null
+		"ComplexEditor": null,
+		"TurnStopId": 36868
 	}, {
 		"Code": "LAD|1527114",
 		"Name": "А54 вул. Антонича - Брюховичі",
 		"Id": 1527114,
-		"ComplexEditor": null
+		"ComplexEditor": null,
+		"TurnStopId": 36899
 	}, {
 		"Code": "LAD|1060598",
 		"Name": "А55 Варшавська - Збиранка",
@@ -292,7 +299,8 @@
 		"Code": "LAD|1054553",
 		"Name": "Нічний А04 Червоної Калини - Центр - Залізничний вокзал",
 		"Id": 1054553,
-		"ComplexEditor": null
+		"ComplexEditor": null, 
+		"TurnStopId": 36649
 	}, {
 		"Code": "LAD|2143336",
 		"Name": "Нічний А05-рем Залізничний вокзал - Центр - вул. Дунайська",

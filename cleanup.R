@@ -72,6 +72,8 @@ write.csv(df_routes, "data-tidy/routes.csv", fileEncoding="UTF-8", row.names = F
 ## Read routes stops
 fn_route_stops <- list.files(path = "data-init/", pattern = "[0-9]+_stops\\.json$", full.names = T)
 
+datalist = list()
+
 for(i in 1:length(fn_route_stops)){
   
   fn <- fn_route_stops[i]
@@ -92,16 +94,23 @@ for(i in 1:length(fn_route_stops)){
   ## Rename columns
   colnames(df_route_stops) <- c("lon", "lat", "code", "name", "id")
   
+  df_route_stops$routeid <- as.numeric(gsub('.*/([0-9]+)_stops\\.json$','\\1',fn))
+  
   fn_csv <- paste("data-tidy/", tools::file_path_sans_ext(basename(fn)), ".csv", sep = "")
   
   ## save it to 
   write.csv(df_route_stops, fn_csv, fileEncoding="UTF-8", row.names = F)
+  
+  datalist[[i]] <- df_route_stops
 }
 
+df_route_stops = do.call(rbind, datalist)
+
+write.csv(df_route_stops, "data-tidy/df_route_stops.csv", fileEncoding="UTF-8", row.names = F)
 
 ## Read routes path
 fn_route_path <- list.files(path = "data-init/", pattern = "[0-9]+_path\\.json$", full.names = T)
-
+datalist = list()
 for(i in 1:length(fn_route_path)){
   fn <- fn_route_path[i]
   print(fn)
@@ -115,11 +124,19 @@ for(i in 1:length(fn_route_path)){
   ## Rename columns
   colnames(df_route_path) <- c("lon", "lat")
   
+  df_route_path$routeid <- as.numeric(gsub('.*/([0-9]+)_path\\.json$','\\1',fn))
+  
   fn_csv <- paste("data-tidy/", tools::file_path_sans_ext(basename(fn)), ".csv", sep = "")
   
   ## save it to 
   write.csv(df_route_path, fn_csv, fileEncoding="UTF-8", row.names = F)
+  
+  datalist[[i]] <- df_route_path
 }
+
+df_route_path = do.call(rbind, datalist)
+
+write.csv(df_route_path, "data-tidy/df_route_path.csv", fileEncoding="UTF-8", row.names = F)
 
 ## Cleanup vehicles GPS data
 
@@ -156,7 +173,7 @@ data <- data[rowSums(is.na(data)) == 0, ]
 
 
 ## Exctract data about vehicles
-df_vehicles <- unique(subset(data, select = c(vehicleid, vehiclename, lowfloor)))
+df_vehicles <- unique(subset(data, select = c(routeid, vehicleid, vehiclename, lowfloor)))
 df_vehicles$lowfloor <- as.character(df_vehicles$lowfloor)
 df_vehicles$lowfloor <- ifelse(df_vehicles$lowfloor == "t", 1, 0)
 write.csv(df_vehicles, "data-tidy/vehicles.csv", fileEncoding="UTF-8", row.names = F)
