@@ -57,8 +57,8 @@ df_routes$Name <-  gsub("\"", "", df_routes$Name)
 df_routes$Name <- str_trim(df_routes$Name)
 
 ## Rename columns
-colnames(df_routes) <- c("code", "name", "id")
-
+colnames(df_routes) <- c("code", "name", "id", "turnstopid")
+df_routes[is.na(df_routes$turnstopid),]$turnstopid <- -1
 ## Take a look at it's variance
 summary(df_routes)
 
@@ -112,6 +112,7 @@ write.csv(df_route_stops, "data-tidy/df_route_stops.csv", fileEncoding="UTF-8", 
 fn_route_path <- list.files(path = "data-init/", pattern = "[0-9]+_path\\.json$", full.names = T)
 datalist = list()
 for(i in 1:length(fn_route_path)){
+  
   fn <- fn_route_path[i]
   print(fn)
   
@@ -124,7 +125,21 @@ for(i in 1:length(fn_route_path)){
   ## Rename columns
   colnames(df_route_path) <- c("lon", "lat")
   
-  df_route_path$routeid <- as.numeric(gsub('.*/([0-9]+)_path\\.json$','\\1',fn))
+  routeid <- as.numeric(gsub('.*/([0-9]+)_path\\.json$','\\1',fn))
+  
+  turnstopid <- df_routes[df_routes$id == routeid,]$turnstopid
+  
+  df_route_path$routeid <- routeid
+  
+  turnstop <- df_bus_stops[df_bus_stops$id == turnstopid,]
+  
+  df_route_path$rowid <- rownames(df_route_path)
+  
+  row_id <- rownames(df_route_path[df_route_path$lon == turnstop$lon & df_route_path$lat == turnstop$lat,])[1]
+
+  df_route_path$dir <- ifelse(as.integer(df_route_path$rowid) < as.integer(row_id), 0, 1)
+  
+  df_route_path <- subset(df_route_path, select = -c(rowid))
   
   fn_csv <- paste("data-tidy/", tools::file_path_sans_ext(basename(fn)), ".csv", sep = "")
   
