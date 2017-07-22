@@ -2,6 +2,7 @@
 library(dplyr)
 library(jsonlite)
 library(stringr)
+library(lubridate)
 
 ## Fix for Ukrainian characters
 Sys.setlocale('LC_ALL', 'Ukrainian')
@@ -120,5 +121,51 @@ for(i in 1:length(fn_route_path)){
   write.csv(df_route_path, fn_csv, fileEncoding="UTF-8", row.names = F)
 }
 
+## Cleanup vehicles GPS data
+
+data <- read.csv("data-init/busdata_220717_1230.csv", encoding="UTF-8")
+
+## Take a look at it's variance
+summary(data)
+
+## Take a look at top 3 rows
+head(data, 3)
+
+## Convert datatime from string to POSIXct
+data$datetime <- as.character(data$datetime)
+data$datetime <- as.POSIXct(strptime(data$datetime, "%Y-%m-%d %H:%M:%OS", tz="GMT"))
+
+## Convert timezone to Europe/Kiev
+data$datetime <- with_tz(data$datetime, tzone = "Europe/Kiev")
 
 
+## Remove columns with no data
+data <- subset(data, select = -c(endpoint, iterationend, iterationstart, routecode, startpoint))
+
+## Remove columns with useless data
+data <- subset(data, select = -c(routename))
+
+
+## Amalyze rows with NA values
+na_data <- data[rowSums(is.na(data)) > 0, ]
+
+summary(na_data)
+
+# Seems like there is no useful data there, so we can remove theese rows
+data <- data[rowSums(is.na(data)) == 0, ]
+
+
+## Exctract data about vehicles
+df_vehicles <- unique(subset(data, select = c(vehicleid, vehiclename, lowfloor)))
+df_vehicles$lowfloor <- as.character(df_vehicles$lowfloor)
+df_vehicles$lowfloor <- ifelse(df_vehicles$lowfloor == "t", 1, 0)
+write.csv(df_vehicles, "data-tidy/vehicles.csv", fileEncoding="UTF-8", row.names = F)
+
+## Remove columns we have already exctracted
+data <- subset(data, select = -c(vehiclename, lowfloor))
+
+## Update column names
+colnames(data) <- c("datetime", "angle", "routeid", "state", "timetopoint", "vehicleid", "lon", "lat")
+
+## Save tidy dataset
+write.csv(data, "data-tidy/tidy_busdata_220717_1230.csv", fileEncoding="UTF-8", row.names = F)
