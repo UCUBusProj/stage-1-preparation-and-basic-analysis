@@ -1,0 +1,162 @@
+---
+title: 'UCU Bus Dataset - Basic Analysis'
+date: "July 23, 2017"
+output: 
+  html_document:
+    toc: true
+    theme: united
+  html_notebook: default
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+google_api_key <- "AIzaSyCwgJ5KfTqcNV5oy5YVGIGweM4Y18nA9hs"
+```
+
+## Synopsis
+This report aims to describe the dataset, it's quality, and possible improvements for data.
+
+Near UCU campus on Kozelnytska str there are three bus stops. This dataset is a crowled GPS data for buses, which stops there.
+
+## Preparations
+```{r libs, warning=FALSE, message=FALSE}
+library(dplyr)
+library(stringr)
+library(lubridate)
+library(ggplot2)
+library(ggmap)
+library(geosphere)
+library(pander)
+```
+
+```{r locale.backup, cache = FALSE, results='hide'}
+# Backup system locale settings
+l <- Sys.getlocale()
+
+# Fix for Ukrainian characters
+Sys.setlocale('LC_ALL', 'Ukrainian')
+```
+
+## Loading data
+You can download latest datasets from [this repository](https://github.com/UCUBusProj/lviv-ucu-bus-stop-dataset/tree/master/data-tidy). 
+
+
+```{r data.load}
+df_data <- read.csv("data-tidy/tidy_busdata_230717_1400.csv", encoding="UTF-8", stringsAsFactors = F)
+df_data$datetime <- as.POSIXct(strptime(df_data$datetime, "%Y-%m-%d %H:%M:%OS", tz="Europe/Kiev"))
+
+df_routes <- read.csv("data-tidy/routes.csv", encoding="UTF-8")
+df_stops <- read.csv("data-tidy/bus_stops.csv", encoding="UTF-8")
+df_route_stops <- read.csv("data-tidy/df_route_stops.csv", encoding="UTF-8")
+df_route_path <- read.csv("data-tidy/df_route_path.csv", encoding="UTF-8")
+df_vehicles <- read.csv("data-tidy/vehicles.csv", encoding="UTF-8")
+```
+
+## Exploration of Routes
+
+### Route stops count
+
+```{r df_route_stops.table}
+df_route_stops %>%
+  group_by(routeid) %>%
+  summarise (n = n()) %>% 
+  arrange(desc(n)) -> df_route_stops_stats
+df_route_stops_stats <- data.frame(df_route_stops_stats)
+
+df_route_stops_stats$routeid <- factor(as.character(df_route_stops_stats$routeid), levels = df_route_stops_stats$routeid)
+pander(df_route_stops_stats)
+```
+
+```{r df_route_stops.plot}
+ggplot(data=df_route_stops_stats, aes(x=routeid, y=n, fill=routeid)) +
+  geom_bar(stat="identity") + 
+  scale_fill_brewer(palette="Set1") +
+  coord_flip()
+```
+
+### Route path lenght
+
+```{r df_route_path.map}
+sq_map <- get_map(location = c(24.02324, 49.83826), source = "google", zoom = 12, maptype = 'hybrid', api_key = google_api_key)
+ggmap(sq_map) + 
+  geom_path(data = df_route_path, mapping = aes(x = lon, y = lat), color = "red") +
+  facet_wrap("routeid", nrow = 2, ncol = 4)
+
+```
+
+```{r df_route_length.table}
+total_distance <- function(x) {
+  x_m <- cbind(x[1:nrow(x)-1,c('lon','lat')], x[2:nrow(x),c('lon','lat')])
+  
+  pointsGeoDistance <- function(x) {
+    distm(c(x[1], x[2]), c(x[3], x[4]), fun=distHaversine)
+  }
+  
+  x_m$dist<-apply(x_m, 1, pointsGeoDistance)
+  
+  sum(x_m$dist)
+}
+
+df_route_path %>% 
+  group_by(routeid) %>%
+  do(data.frame(total_distance=total_distance(.))) %>% 
+  arrange(desc(total_distance)) -> df_route_length
+df_route_length <- data.frame(df_route_length)
+df_route_length$routeid <- factor(as.character(df_route_length$routeid), levels = df_route_length$routeid)
+pander(df_route_length)
+```
+
+```{r df_route_length.plot}
+ggplot(data=df_route_length, aes(x=routeid, y=total_distance, fill=routeid)) +
+  geom_bar(stat="identity") + 
+  scale_fill_brewer(palette="Set1") +
+  coord_flip()
+```
+
+### Dayly Vehicle count by route
+
+```{r df_vehicles_by_route.cnt}
+df_data$minints<-cut(df_data$datetime, breaks="1 day")
+
+df_data %>%
+  group_by(routeid, minints) %>%
+  summarise (veh_n = length(unique(vehicleid))) %>% 
+  group_by(routeid) %>% 
+  summarise(min = min(veh_n), mean = mean(veh_n), 
+            median = median(veh_n), max = max(veh_n)) %>% 
+  arrange(desc(median)) -> df_vehicles_by_route
+
+df_vehicles_by_route <- data.frame(df_vehicles_by_route)
+df_vehicles_by_route$routeid <- factor(as.character(df_vehicles_by_route$routeid), levels = df_vehicles_by_route$routeid)
+pander(df_vehicles_by_route)
+```
+```{r df_vehicles_by_route.plot}
+ggplot(data=df_vehicles_by_route, aes(x=routeid, y=median, fill=routeid)) +
+  geom_bar(stat="identity") + 
+  scale_fill_brewer(palette="Set1") +
+  coord_flip()
+```
+
+## GPS records data distribution by routes
+
+```{r data_route_distr.cnt}
+
+df_data %>%
+  group_by(routeid, vehicleid) %>%
+  summarise(count = n())  %>% 
+  group_by(routeid) %>% 
+  summarise(mean_count = mean(count))  %>% 
+  arrange(desc(mean_count)) -> data_route_distr
+
+data_route_distr <- data.frame(data_route_distr)
+data_route_distr$routeid <- factor(as.character(data_route_distr$routeid), levels = data_route_distr$routeid)
+pander(data_route_distr)
+```
+
+```{r df_route_distr.plot}
+ggplot(data=data_route_distr, aes(x=routeid, y=mean_count, fill=routeid)) +
+  geom_bar(stat="identity") + 
+  scale_fill_brewer(palette="Set1") +
+  coord_flip()
+```

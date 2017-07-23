@@ -10,7 +10,7 @@ library(sp)
 library(geosphere)
 
 ## Load dataset
-data <- read.csv("data-tidy/tidy_busdata_220717_1230.csv", encoding="UTF-8", stringsAsFactors = F)
+data <- read.csv("data-tidy/tidy_busdata_230717_1400.csv", encoding="UTF-8", stringsAsFactors = F)
 data$datetime <- as.POSIXct(strptime(data$datetime, "%Y-%m-%d %H:%M:%OS", tz="Europe/Kiev"))
 df_routes <- read.csv("data-tidy/routes.csv", encoding="UTF-8")
 df_stops <- read.csv("data-tidy/bus_stops.csv", encoding="UTF-8")
@@ -104,7 +104,7 @@ calc_delay <- function(x) {
   colnames(x_m) <- c('dt1', 'dt2')
   x_m$dt1 <- as.POSIXct(strptime(x_m$dt1, "%Y-%m-%d %H:%M:%OS", tz="Europe/Kiev"))
   x_m$dt2 <- as.POSIXct(strptime(x_m$dt2, "%Y-%m-%d %H:%M:%OS", tz="Europe/Kiev"))
-  x_m$diff<-as.numeric(x_m$dt2-x_m$dt1)
+  x_m$delay <-as.numeric(x_m$dt2-x_m$dt1)
   x_m
 }
 
@@ -131,8 +131,6 @@ data %>%
   do(data.frame(calc_delay(.))) -> data_delay
 
 
-#data_delay <- data_delay[data_delay$diff < 360,]
-
 data_delay <- data.frame(data_delay)
 data_delay$dt1 <- data_delay$dt1
 data_delay$dt2 <- data_delay$dt2
@@ -152,6 +150,30 @@ minints<-cut(data_delay$dt1, breaks="1 hour")
 
 #find min/max with tapply
 diffbyhour<-with(data_delay, unname(tapply(diff,minints,mean)))
+
+data2<-data.frame(intstart=as.POSIXct(levels(minints)),diffbyhour)
+
+#drop empty intervals
+data2<-data2[complete.cases(data2),]
+
+
+ggplot(data2, aes(x = data2$intstart, y = data2$diffbyhour)) + geom_jitter() +
+  scale_x_datetime(date_labels = '%H:%M', date_breaks = "2 hours", timezone = "Europe/Kiev") + xlab("") + ylab("Delay time (sec)") +
+  theme(axis.text.x=element_text(angle=90, hjust=1))
+
+
+## Cut off 1% of GPS data delay distribution
+quantile(data_delay$diff, 0.99)
+
+data_delay_cutoff <- data_delay[data_delay$diff < quantile(data_delay$diff, 0.99), ]
+
+dim(data_delay_cutoff)
+
+
+minints<-cut(data_delay_cutoff$dt1, breaks="1 hour")
+
+#find min/max with tapply
+diffbyhour<-with(data_delay_cutoff, unname(tapply(diff,minints,mean)))
 
 data2<-data.frame(intstart=as.POSIXct(levels(minints)),diffbyhour)
 
