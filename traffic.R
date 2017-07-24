@@ -9,11 +9,11 @@ library(fossil)
 ## Load data
 data <- read.csv("data-tidy/tidy_busdata_240717_1430.csv", encoding="UTF-8", stringsAsFactors = F)
 data$datetime <- as.POSIXct(strptime(data$datetime, "%Y-%m-%d %H:%M:%OS", tz="Europe/Kiev"))
-df_route_path <- read.csv("data-tidy/all_paths.csv", encoding="UTF-8")
+df_route_path <- read.csv("data-tidy/all_paths_detailed_full.csv", encoding="UTF-8")
 
 data %>% 
   filter(state == 1) %>% 
-  filter(routeid == 712991) %>% 
+  filter(!routeid %in% c(712991, 1054553)) %>% 
   group_by(routeid, vehicleid) %>% 
   summarise() -> route_vehicle_g
 
@@ -43,7 +43,7 @@ dataset_r_v_x_df$tdiff <- difftime(dataset_r_v_x_df$t2,dataset_r_v_x_df$t1, tz="
 
 dataset_r_v_x_df <- dataset_r_v_x_df[dataset_r_v_x_df$tdiff <= 120 & dataset_r_v_x_df$tdiff >=0 ,]
 
-write.csv(dataset_r_v_x_df, "data-calc/dataset_r_v_x.csv", fileEncoding="UTF-8", row.names = F)
+write.csv(dataset_r_v_x_df, "data-calc/dataset_r_v_x_others.csv", fileEncoding="UTF-8", row.names = F)
 
 
 
@@ -63,7 +63,7 @@ r_v_x_df_difff_res$speed <- r_v_x_df_difff_res$dist/(r_v_x_df_difff_res$tdiff/(6
 
 r_v_x_df_difff_res <- r_v_x_df_difff_res[r_v_x_df_difff_res$p_index1 > 0,]
 
-write.csv(r_v_x_df_difff_res, "data-calc/r_v_x_df_difff_res.csv", fileEncoding="UTF-8", row.names = F)
+write.csv(r_v_x_df_difff_res, "data-calc/r_v_x_df_difff_others_res.csv", fileEncoding="UTF-8", row.names = F)
 
 hist(r_v_x_df_difff_res$speed)
 
