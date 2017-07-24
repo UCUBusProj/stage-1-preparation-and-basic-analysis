@@ -155,7 +155,7 @@ write.csv(df_route_path, "data-tidy/df_route_path.csv", fileEncoding="UTF-8", ro
 
 ## Cleanup vehicles GPS data
 
-data <- read.csv("data-init/busdata_230717_1400.csv", encoding="UTF-8")
+data <- read.csv("data-init/busdata_240717_1430.csv", encoding="UTF-8")
 
 ## Take a look at it's variance
 summary(data)
@@ -200,4 +200,4 @@ data <- subset(data, select = -c(vehiclename, lowfloor))
 colnames(data) <- c("datetime", "angle", "routeid", "state", "timetopoint", "vehicleid", "lon", "lat")
 
 ## Save tidy dataset
-write.csv(data, "data-tidy/tidy_busdata_230717_1400.csv", fileEncoding="UTF-8", row.names = F)
+write.csv(data, "data-tidy/tidy_busdata_240717_1430.csv", fileEncoding="UTF-8", row.names = F)
